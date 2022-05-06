@@ -88,10 +88,10 @@ endif
 # Set NVCC as $(CUDA_HOME)/bin/nvcc if it exists
 ifneq ($(wildcard $(CUDA_HOME)/bin/nvcc),)
   NVCC = $(CUDA_HOME)/bin/nvcc
-  CUARCHNUM=70
+  CUARCHNUM=80
   ###CUARCHNUM=61 # (For Pascal Architecture Cards)
   USE_NVTX ?=-DUSE_NVTX
-  CUARCHFLAGS = -arch=compute_$(CUARCHNUM)
+  CUARCHFLAGS = -arch=sm_$(CUARCHNUM)
   ###CUARCHFLAGS = -gencode arch=compute_$(CUARCHNUM),code=sm_$(CUARCHNUM)
   CUINC       = -I$(CUDA_HOME)/include/
   CULIBFLAGS  = -L$(CUDA_HOME)/lib64/ -lcurand # NB: -lcuda is not needed here!

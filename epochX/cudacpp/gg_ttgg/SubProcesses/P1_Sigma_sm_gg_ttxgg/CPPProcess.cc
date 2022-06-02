@@ -78,13 +78,21 @@ namespace mg5amcCpu
 #endif
 
 #ifdef __CUDACC__
+  constexpr int ncolor = 24;
   __host__ __device__ void
-  colormatrix( const fptype gcf[][24],
+  colormatrix( const fptype gcf[][ncolor],
                const fptype gdenom[],
                const fptype gjampr[],
                const fptype gjampi[],
                fptype gdeltaMEs[] )
   {
+// res1 = np.matmul(jampr, cf)
+// res2 = np.matmul(res1, jampr)
+// res3 = np.matmul(jampi, cf)
+// res4 = np.matmul(res3, jampi)
+// return (res2 + res4) / 54
+
+
   }
 #endif
 

@@ -5,6 +5,10 @@ CUDACPP_MAKEFILE = $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
 CUDACPP_SRC_MAKEFILE = cudacpp_src.mk
 
 #-------------------------------------------------------------------------------
+# Local installations
+USRLOC = /p/home/jusers/roiser1/juwels/usr/local/
+
+#-------------------------------------------------------------------------------
 
 #=== Use bash in the Makefile (https://www.gnu.org/software/make/manual/html_node/Choosing-the-Shell.html)
 
@@ -31,8 +35,8 @@ OPTFLAGS = -O3 # this ends up in CUFLAGS too (should it?), cannot add -Ofast or 
 
 # Dependency on src directory
 MG5AMC_COMMONLIB = mg5amc_common
-LIBFLAGS = -L$(LIBDIR) -l$(MG5AMC_COMMONLIB)
-INCFLAGS += -I../../src
+LIBFLAGS = -L$(LIBDIR) -l$(MG5AMC_COMMONLIB) -L$(USRLOC)/lib64 -lcutlass
+INCFLAGS += -I../../src -I$(USRLOC)/include
 
 # Dependency on tools directory
 TOOLSDIR = ../../../../../tools

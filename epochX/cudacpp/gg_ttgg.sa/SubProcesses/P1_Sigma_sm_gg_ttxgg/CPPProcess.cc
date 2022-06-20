@@ -82,6 +82,25 @@ namespace mg5amcCpu
   static int cGoodHel[ncomb];
 #endif
 
+#ifdef __CUDACC__
+  constexpr int ncolor = 24;
+  __host__ __device__ void
+  colormatrix( const fptype gcf[][ncolor],
+               const fptype gdenom[],
+               const fptype gjampr[],
+               const fptype gjampi[],
+               fptype gdeltaMEs[] )
+  {
+// res1 = np.matmul(jampr, cf)
+// res2 = np.matmul(res1, jampr)
+// res3 = np.matmul(jampi, cf)
+// res4 = np.matmul(res3, jampi)
+// return (res2 + res4) / 54
+
+
+  }
+#endif
+
   //--------------------------------------------------------------------------
 
   // Evaluate |M|^2 for each subprocess
@@ -2463,6 +2482,22 @@ namespace mg5amcCpu
         // Rewrite the quadratic form (A-iB)(M)(A+iB) as AMA - iBMA + iBMA + BMB = AMA + BMB!
         deltaMEs += ( cxreal( ztemp_sv ) * cxreal( jamp_sv[icol] ) + cximag( ztemp_sv ) * cximag( jamp_sv[icol] ) ) / denom[icol];
       }
+
+#ifdef __CUDACC__
+      fptype jampr[ncolor] = {},
+             jampi[ncolor] = {},
+             gdeltaMEs = 0;
+
+      for( int i = 0; i < ncolor; ++i )
+      {
+        jampr[i] = cxreal( jamp_sv[i] );
+        jampi[i] = cximag( jamp_sv[i] );
+      }
+
+      colormatrix( cf, denom, jampr, jampi, &gdeltaMEs );
+
+      printf( "deltaMEs, Host=%f, Device=%f\n", deltaMEs, gdeltaMEs );
+#endif
 
       // *** STORE THE RESULTS ***
 

@@ -91,13 +91,11 @@ namespace mg5amcCpu
                const fptype gjampi[],
                fptype gdeltaMEs[] )
   {
-// res1 = np.matmul(jampr, cf)
-// res2 = np.matmul(res1, jampr)
-// res3 = np.matmul(jampi, cf)
-// res4 = np.matmul(res3, jampi)
-// return (res2 + res4) / 54
-
-
+    // res1 = np.matmul(jampr, cf)
+    // res2 = np.matmul(res1, jampr)
+    // res3 = np.matmul(jampi, cf)
+    // res4 = np.matmul(res3, jampi)
+    // return (res2 + res4) / 54
   }
 #endif
 

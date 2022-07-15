@@ -30,6 +30,18 @@
 #include <iostream>
 #include <memory>
 
+#ifdef __CUDACC__
+#include "cutlass/cutlass.h"
+#include "cutlass/gemm/device/gemm_complex.h"
+#include "cutlass/util/host_tensor.h"
+//
+#include "cutlass/util/reference/host/gemm.h"
+#include "cutlass/util/reference/host/tensor_compare.h"
+#include "cutlass/util/reference/host/tensor_copy.h"
+#include "cutlass/util/reference/host/tensor_fill.h"
+#include "cutlass/util/tensor_view_io.h"
+#endif
+
 // Test ncu metrics for CUDA thread divergence
 #undef MGONGPU_TEST_DIVERGENCE
 //#define MGONGPU_TEST_DIVERGENCE 1
@@ -82,7 +94,12 @@ namespace mg5amcCpu
   static int cGoodHel[ncomb];
 #endif
 
+  // >>> cutlass starts here
+
 #ifdef __CUDACC__
+
+#if defined( CUTLASS_ARCH_MMA_SM80_SUPPORTED )
+
   constexpr int ncolor = 24;
   __host__ __device__ void
   colormatrix( const fptype gcf[][ncolor],
@@ -97,7 +114,14 @@ namespace mg5amcCpu
     // res4 = np.matmul(res3, jampi)
     // return (res2 + res4) / 54
   }
-#endif
+
+#else // CUTLASS_ARCH_MMA_SM80_SUPPORTED
+
+#endif // CUTLASS_ARCH_MMA_SM80_SUPPORTED
+
+#endif // __CUDACC__
+
+  // <<< cutlass ends here
 
   //--------------------------------------------------------------------------
 
@@ -2494,7 +2518,7 @@ namespace mg5amcCpu
 
       colormatrix( cf, denom, jampr, jampi, &gdeltaMEs );
 
-      printf( "deltaMEs, Host=%f, Device=%f\n", deltaMEs, gdeltaMEs );
+      // sr // printf( "deltaMEs, Host=%f, Device=%f\n", deltaMEs, gdeltaMEs );
 #endif
 
       // *** STORE THE RESULTS ***

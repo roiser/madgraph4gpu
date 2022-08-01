@@ -40,6 +40,11 @@
 #include "cutlass/util/reference/host/tensor_copy.h"
 #include "cutlass/util/reference/host/tensor_fill.h"
 #include "cutlass/util/tensor_view_io.h"
+
+#include <cutlass/gemm/device/gemm.h>
+#include <cutlass/numeric_types.h>
+#include <cutlass/util/host_tensor.h>
+
 #endif // __CUDACC__
 
 // Test ncu metrics for CUDA thread divergence
@@ -108,6 +113,53 @@ namespace mg5amcCpu
                const fptype gjampi[],
                fptype gdeltaMEs[] )
   {
+    using Gemm = cutlass::gemm::device::Gemm<
+      cutlass::bfloat16_t,            // ElementA
+      cutlass::layout::ColumnMajor,   // LayoutA
+      cutlass::bfloat16_t,            // ElementB
+      cutlass::layout::ColumnMajor,   // LayoutB
+      cutlass::bfloat16_t,            // ElementOutput
+      cutlass::layout::ColumnMajor,   // LayoutOutput
+      cutlass::bfloat16_t,            // ElementAccumulator
+      cutlass::arch::OpClassTensorOp, // tag indicating Tensor Cores
+      cutlass::arch::Sm80             // tag indicating target GPU compute architecture
+      >;
+
+    Gemm gemm_op;
+    cutlass::Status status;
+
+    int M = 24;
+    int N = 24;
+    int K = 24;
+
+    cutlass::HostTensor<cutlass::bfloat16_t, cutlass::layout::ColumnMajor> A( { M, K } );
+    cutlass::HostTensor<cutlass::bfloat16_t, cutlass::layout::ColumnMajor> B( { K, N } );
+    cutlass::HostTensor<cutlass::bfloat16_t, cutlass::layout::ColumnMajor> C( { M, N } );
+
+    cutlass::bfloat16_t const* ptrA = A.device_data();
+    cutlass::bfloat16_t const* ptrB = B.device_data();
+    cutlass::bfloat16_t const* ptrC = C.device_data();
+    cutlass::bfloat16_t* ptrD = C.device_data();
+
+    int lda = A.device_ref().stride( 0 );
+    int ldb = B.device_ref().stride( 0 );
+    int ldc = C.device_ref().stride( 0 );
+    int ldd = C.device_ref().stride( 0 );
+
+    status = gemm_op( {
+      { M, N, K },
+      { ptrA, lda }, // TensorRef to A device tensor
+      { ptrB, ldb }, // TensorRef to B device tensor
+      { ptrC, ldc }, // TensorRef to C device tensor
+      { ptrD, ldd }, // TensorRef to D device tensor - may be the same as C
+                     //    {alpha, beta}           // epilogue operation arguments
+    } );
+
+    if( status != cutlass::Status::kSuccess )
+    {
+      printf( "error in cutlass\n" );
+    }
+
     // res1 = np.matmul(jampr, cf)
     // res2 = np.matmul(res1, jampr)
     // res3 = np.matmul(jampi, cf)

@@ -583,7 +583,7 @@ C
         IF ( FIRST ) THEN ! exclude first pass (helicity filtering) from timers (#461)
           CALL FBRIDGESEQUENCE_NOMULTICHANNEL( FBRIDGE_PBRIDGE, ! multi channel disabled for helicity filtering
      &      P_MULTI, ALL_G, HEL_RAND, COL_RAND, OUT2,
-     &      SELECTED_HEL2, SELECTED_COL2 )
+     &      SELECTED_HEL2, SELECTED_COL2, .TRUE. )
           FIRST = .FALSE.
 C         ! This is a workaround for
 C          https://github.com/oliviermattelaer/mg5amc_test/issues/22
@@ -604,7 +604,7 @@ C          (see PR #486)
         IF ( .NOT. MULTI_CHANNEL ) THEN
           CALL FBRIDGESEQUENCE_NOMULTICHANNEL( FBRIDGE_PBRIDGE, ! multi channel disabled
      &      P_MULTI, ALL_G, HEL_RAND, COL_RAND, OUT2,
-     &      SELECTED_HEL2, SELECTED_COL2 )
+     &      SELECTED_HEL2, SELECTED_COL2, .FALSE. )
         ELSE
           IF( SDE_STRAT.NE.1 ) THEN
             WRITE(6,*) 'ERROR  ! The cudacpp bridge requires SDE=1' ! multi channel single-diagram enhancement strategy

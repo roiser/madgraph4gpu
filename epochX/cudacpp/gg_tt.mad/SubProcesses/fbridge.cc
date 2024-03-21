@@ -92,18 +92,19 @@ extern "C"
                          const unsigned int* pchannelIds,
                          FORTRANFPTYPE* mes,
                          int* selhel,
-                         int* selcol )
+                         int* selcol,
+                         bool goodHelOnly = false )
   {
     Bridge<FORTRANFPTYPE>* pbridge = dynamic_cast<Bridge<FORTRANFPTYPE>*>( *ppbridge );
     if( pbridge == 0 ) throw std::runtime_error( "fbridgesequence_: invalid Bridge address" );
 #ifdef MGONGPUCPP_GPUIMPL
     // Use the device/GPU implementation in the CUDA library
     // (there is also a host implementation in this library)
-    pbridge->gpu_sequence( momenta, gs, rndhel, rndcol, pchannelIds, mes, selhel, selcol );
+    pbridge->gpu_sequence( momenta, gs, rndhel, rndcol, pchannelIds, mes, selhel, selcol, goodHelOnly );
 #else
     // Use the host/CPU implementation in the C++ library
     // (there is no device implementation in this library)
-    pbridge->cpu_sequence( momenta, gs, rndhel, rndcol, pchannelIds, mes, selhel, selcol );
+    pbridge->cpu_sequence( momenta, gs, rndhel, rndcol, pchannelIds, mes, selhel, selcol, goodHelOnly );
 #endif
   }
 
@@ -127,9 +128,10 @@ extern "C"
                                         const FORTRANFPTYPE* rndcol,
                                         FORTRANFPTYPE* mes,
                                         int* selhel,
-                                        int* selcol )
+                                        int* selcol,
+                                        bool goodHelOnly = false )
   {
-    fbridgesequence_( ppbridge, momenta, gs, rndhel, rndcol, nullptr, mes, selhel, selcol );
+    fbridgesequence_( ppbridge, momenta, gs, rndhel, rndcol, nullptr, mes, selhel, selcol, goodHelOnly );
   }
 
   /**

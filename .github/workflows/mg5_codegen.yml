@@ -1,0 +1,102 @@
+name: Code Generator CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  generate-and-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout codegen repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Run code generator
+        run: |
+          chmod +x codegen.sh
+          ./codegen.sh
+      
+      - name: Check code format with clang-format
+        id: format-check
+        run: |
+          # Find all generated C/C++ files (adjust pattern as needed)
+          find . -type f \( -name "*.c" -o -name "*.cpp" -o -name "*.h" -o -name "*.hpp" \) > files.txt
+          
+          # Run clang-format check
+          if clang-format --dry-run --Werror $(cat files.txt) 2>&1 | tee format-output.txt; then
+            echo "format_ok=true" >> $GITHUB_OUTPUT
+            echo "✅ Code is properly formatted"
+          else
+            echo "format_ok=false" >> $GITHUB_OUTPUT
+            echo "❌ Code needs formatting"
+            
+            # Generate the diff for needed changes
+            clang-format -i $(cat files.txt)
+            git diff > format-changes.patch
+          fi
+      
+      - name: Commit to target repository
+        if: steps.format-check.outputs.format_ok == 'true'
+        env:
+          TARGET_REPO: your-username/target-repo  # Change this
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Or use a PAT: secrets.TARGET_REPO_PAT
+        run: |
+          # Configure git
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Clone target repo
+          git clone https://x-access-token:${GH_TOKEN}@github.com/${TARGET_REPO}.git target-repo
+          cd target-repo
+          
+          # Create branch based on PR number
+          BRANCH_NAME="codegen-pr-${{ github.event.pull_request.number }}"
+          git checkout -b ${BRANCH_NAME}
+          
+          # Copy generated files (adjust paths as needed)
+          cp -r ../generated-output/* .
+          
+          # Commit and push
+          git add .
+          git commit -m "Code generated from PR #${{ github.event.pull_request.number }}" \
+                     -m "Source PR: ${{ github.event.pull_request.html_url }}"
+          git push origin ${BRANCH_NAME}
+          
+          echo "✅ Pushed to ${TARGET_REPO} on branch ${BRANCH_NAME}"
+      
+      - name: Comment on PR with format issues
+        if: steps.format-check.outputs.format_ok == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const patch = fs.readFileSync('format-changes.patch', 'utf8');
+            
+            const comment = `## ❌ Code Format Check Failed
+            
+            The generated code does not conform to clang-format rules.
+            
+            <details>
+            <summary>Required formatting changes</summary>
+            
+            \`\`\`diff
+            ${patch}
+            \`\`\`
+            
+            </details>
+            
+            Please update your code generator to produce properly formatted code.`;
+            
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: comment
+            });
+      
+      - name: Fail if format check failed
+        if: steps.format-check.outputs.format_ok == 'false'
+        run: exit 1

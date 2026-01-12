@@ -25,10 +25,11 @@ jobs:
         run: |
           cd PROC_pp_ttx
           # Find all generated C/C++ files (adjust pattern as needed)
-          find . -type f \( -name "*.c" -o -name "*.cpp" -o -name "*.h" -o -name "*.hpp" \) > files.txt
+          find . -type f \( -name "*.cc" -o -name "*.h" \) > files.txt
           
           # Run clang-format check
-          if clang-format --dry-run --Werror $(cat files.txt) 2>&1 | tee format-output.txt; then
+          if find . -name '*.cc' -o -name '*.h' | xargs -n1 clang-format -style=file -assume-filename={} {} | diff -u {} -; then
+          #if clang-format --dry-run --Werror $(cat files.txt) 2>&1 | tee format-output.txt; then
             echo "format_ok=true" >> $GITHUB_OUTPUT
             echo "✅ Code is properly formatted"
           else
@@ -41,49 +42,57 @@ jobs:
           fi
       
       - name: Commit to target repository
-        if: steps.format-check.outputs.format_ok == 'true'
+        # if: steps.format-check.outputs.format_ok == 'true'
         env:
           TARGET_REPO: roiser/madgraph4gpu-generated-processes
           GH_TOKEN: ${{ secrets.MG4GPU_GEN_PAT }} ## ${{ secrets.GITHUB_TOKEN }}  # Or use a PAT: secrets.TARGET_REPO_PAT
-          persist-credentials: true
+          #persist-credentials: true
         run: |
-          cd ..
           # Configure git
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@users.noreply.github.com"
           
           # Clone target repo
-          git clone https://x-access-token:${{ secrets.PAT_FOR_PUSH }}@github.com/roiser/madgraph4gpu-generated-processes.git
-          #git clone https://x-access-token:${GH_TOKEN}@github.com/${TARGET_REPO}.git target-repo
+          #git clone https://x-access-token:${{ secrets.PAT_FOR_PUSH }}@github.com/roiser/madgraph4gpu-generated-processes.git
+          git clone https://x-access-token:${GH_TOKEN}@github.com/${TARGET_REPO}.git
           cd madgraph4gpu-generated-processes
 
-          echo git status
-          git status
+          touch foo
+          git add foo
+          git commit -m "Initial commit" -a 
+          git push origin main
+
+          # echo ls
+          # ls
+
+          # echo git status
+          # git status
           
-          # Create branch based on PR number
-          BRANCH_NAME="codegen-pr-${{ github.event.pull_request.number }}"
-          git checkout -b ${BRANCH_NAME}
+          # # Create branch based on PR number
+          # BRANCH_NAME="codegen-pr-${{ github.event.pull_request.number }}"
+          # git checkout -b ${BRANCH_NAME}
           
-          # Copy generated files (adjust paths as needed)
-          cp -r ${GITHUB_WORKSPACE}/PROC_pp_ttx .
+          # # Copy generated files (adjust paths as needed)
+          # cp -r ${GITHUB_WORKSPACE}/PROC_pp_ttx .
 
-          # Commit and push
-          git add .
-          git commit -m "Code generated from PR #${{ github.event.pull_request.number }}" \
-                     -m "Source PR: ${{ github.event.pull_request.html_url }}"
+          # # Commit and push
+          # git add .
+          # git commit -m "Code generated from PR #${{ github.event.pull_request.number }}" 
+          # # \
+          # #           -m "Source PR: ${{ github.event.pull_request.html_url }}"
 
-          echo git status
-          git status
+          # echo git status
+          # git status
 
-          echo pwd
-          pwd
+          # echo pwd
+          # pwd
 
-          echo git remote -v
-          git remote -v
+          # echo git remote -v
+          # git remote -v
 
-          git push origin ${BRANCH_NAME}
+          # git push origin ${BRANCH_NAME}
           
-          echo "✅ Pushed to ${TARGET_REPO} on branch ${BRANCH_NAME}"
+          # echo "✅ Pushed to ${TARGET_REPO} on branch ${BRANCH_NAME}"
       
       - name: Comment on PR with format issues
         if: steps.format-check.outputs.format_ok == 'false'

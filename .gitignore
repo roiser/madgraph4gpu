@@ -5,6 +5,7 @@
 *.mod
 *.pyc
 *.so
+py.py
 build.*
 .build.*
 

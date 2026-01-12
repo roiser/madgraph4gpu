@@ -28,8 +28,8 @@ jobs:
           find . -type f \( -name "*.cc" -o -name "*.h" \) > files.txt
           
           # Run clang-format check
-          if find . -name '*.cc' -o -name '*.h' | xargs -n1 clang-format -style=file -assume-filename={} {} | diff -u {} -; then
-          #if clang-format --dry-run --Werror $(cat files.txt) 2>&1 | tee format-output.txt; then
+          #if find . -name '*.cc' -o -name '*.h' | xargs -n1 clang-format -style=file -assume-filename={} {} | diff -u {} -; then
+          if clang-format --dry-run --Werror $(cat files.txt) 2>&1 | tee format-output.txt; then
             echo "format_ok=true" >> $GITHUB_OUTPUT
             echo "✅ Code is properly formatted"
           else

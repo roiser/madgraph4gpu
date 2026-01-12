@@ -13,15 +13,17 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          submodules: true
       
       - name: Run code generator
         run: |
-          chmod +x codegen.sh
-          ./codegen.sh
+          if [ ! -e MG5aMC/mg5amcnlo/PLUGIN/CUDACPP_SA_OUTPUT ] ; then pushd MG5aMC/mg5amcnlo/PLUGIN/ && ln -s ../../../epochX/cudacpp/CODEGEN/PLUGIN/CUDACPP_SA_OUTPUT && popd ; fi
+          ./MG5aMC/mg5amcnlo/bin/mg5_aMC test/processes/pp_ttx/output.mg5
       
       - name: Check code format with clang-format
         id: format-check
         run: |
+          cd PROC_pp_ttx
           # Find all generated C/C++ files (adjust pattern as needed)
           find . -type f \( -name "*.c" -o -name "*.cpp" -o -name "*.h" -o -name "*.hpp" \) > files.txt
           
@@ -41,7 +43,7 @@ jobs:
       - name: Commit to target repository
         if: steps.format-check.outputs.format_ok == 'true'
         env:
-          TARGET_REPO: your-username/target-repo  # Change this
+          TARGET_REPO: roiser/madgraph4gpu-generated-processes
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Or use a PAT: secrets.TARGET_REPO_PAT
         run: |
           # Configure git

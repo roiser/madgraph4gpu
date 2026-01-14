@@ -26,17 +26,17 @@ jobs:
           chmod +x .github/workflows/check-formatting.sh
           cd PROC_pp_ttx
           $GITHUB_WORKSPACE/.github/workflows/check-formatting.sh
-          echo "format_exit=$?" >> $GITHUB_OUTPUT
+          files2format=$(cat files2format)
+          echo "files2format=$files2format" >> $GITHUB_OUTPUT
 
-          if [ "$format_exit" -eq 0 ]; then
+          if [ "$files2format" -eq 0 ]; then
             echo "✅ clang-format check passed."
           else
             echo "❌ clang-format check failed."
           fi
-        continue-on-error: true
       
       - name: Commit to target repository
-        if: "${{ steps.clang-format-check.outputs.format_exit == 0}}"
+        if: ${{ steps.clang-format-check.outputs.files2format == '0' }}
         env:
           TARGET_REPO: roiser/madgraph4gpu-generated-processes
           GH_TOKEN: ${{ secrets.MG4GPU_GEN_PAT }} 
@@ -66,37 +66,42 @@ jobs:
           echo "✅ Pushed to ${TARGET_REPO} on branch ${BRANCH_NAME}"
       
       - name: Read patch file
-        if: "${{ steps.clang-format-check.outputs.format_exit != 0 }}"
+        if: ${{ steps.clang-format-check.outputs.files2format != '0' }}
         run: |
           {
             echo "patch_file_content<<EOF"
-            cat format-changes.patch
+            cat PROC_pp_ttx/format-changes.patch
             echo "EOF"
           } >> $GITHUB_OUTPUT
 
       - name: Comment on PR with format issues
-        if: "${{ steps.clang-format-check.outputs.format_exit != 0 }}"
+        if: ${{ steps.clang-format-check.outputs.files2format != '0' }}
         uses: actions/github-script@v7
+        env:
+          FILES2FORMAT: ${{ steps.clang-format-check.outputs.files2format }}
+          PROC_DIR: PROC_pp_ttx
         with:
           script: |
+
             const fs = require('fs');
-            const patch = fs.readFileSync('format-changes.patch', 'utf8');
-            
+            const filesToFormat = parseInt(process.env.FILES2FORMAT);
+            const patchContent = fs.readFileSync(`${process.env.PROC_DIR}/format-changes.patch`, 'utf8');
+
             const comment = `## ❌ Code Format Check Failed
             
             The generated code does not conform to clang-format rules. 
 
             Please update your code generator to produce properly formatted code.
-            ${{steps.clang-format-check.outputs.format_exit}} files need formatting.
+            ${filesToFormat} files need formatting.
             See attached patch for details:`;
             
             github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: `${comment} \n ${{steps.clang-format-check.outputs.patch_file_content}}`
+              body: `${comment} \n \`\`\` \n ${patchContent} \n \`\`\``
             });
-      
+
       - name: Fail if format check failed
-        if: "${{ steps.clang-format-check.outputs.format_exit != 0 }}"
+        if: ${{ steps.clang-format-check.outputs.files2format != '0' }}
         run: exit 1

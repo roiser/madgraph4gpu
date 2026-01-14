@@ -7,9 +7,11 @@ count=0
 total=0
 files_needing_format=()
 patch_file="format-changes.patch"
+num_file="files2format"
 
 # clean patch file if it exists
 > "$patch_file"
+> "$num_file"
 
 echo ""
 echo "Checking formatting with clang-format..."
@@ -40,4 +42,4 @@ else
 fi
 echo ""
 
-exit $count
+echo $count | tr -d \\n >> $num_file

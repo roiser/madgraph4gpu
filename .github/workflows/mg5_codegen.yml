@@ -7,6 +7,15 @@ on:
 jobs:
   generate-and-check:
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        process: [pp_ttx, pp_ttxj]
+        backend: [scalar, avx2, avx512, cuda, hip]
+
+    env:
+      PROC_DIR: PROC_${{ matrix.process }}
+      BACKEND : ${{ matrix.backend }}
     
     steps:
       - name: Checkout codegen repo
@@ -18,13 +27,13 @@ jobs:
       - name: Run code generator
         run: |
           if [ ! -e MG5aMC/mg5amcnlo/PLUGIN/CUDACPP_SA_OUTPUT ] ; then pushd MG5aMC/mg5amcnlo/PLUGIN/ && ln -s ../../../epochX/cudacpp/CODEGEN/PLUGIN/CUDACPP_SA_OUTPUT && popd ; fi
-          ./MG5aMC/mg5amcnlo/bin/mg5_aMC test/processes/pp_ttx/output.mg5
+          ./MG5aMC/mg5amcnlo/bin/mg5_aMC test/processes/${{ matrix.process }}/output.mg5
       
       - name: Check code format with clang-format
         id: clang-format-check
         run: |
           chmod +x .github/workflows/check-formatting.sh
-          cd PROC_pp_ttx
+          cd ${{ env.PROC_DIR }}
           $GITHUB_WORKSPACE/.github/workflows/check-formatting.sh
           files2format=$(cat files2format)
           echo "files2format=$files2format" >> $GITHUB_OUTPUT
@@ -54,7 +63,7 @@ jobs:
           git checkout -b ${BRANCH_NAME}
           
           # Copy generated files (adjust paths as needed)
-          cp -r ${GITHUB_WORKSPACE}/PROC_pp_ttx .
+          cp -r ${GITHUB_WORKSPACE}/${{ env.PROC_DIR }} .
 
           # Commit and push
           git add .
@@ -70,7 +79,7 @@ jobs:
         run: |
           {
             echo "patch_file_content<<EOF"
-            cat PROC_pp_ttx/format-changes.patch
+            cat ${{ env.PROC_DIR }}/format-changes.patch
             echo "EOF"
           } >> $GITHUB_OUTPUT
 
@@ -79,7 +88,7 @@ jobs:
         uses: actions/github-script@v7
         env:
           FILES2FORMAT: ${{ steps.clang-format-check.outputs.files2format }}
-          PROC_DIR: PROC_pp_ttx
+#          PROC_DIR: ${{ env.PROC_DIR }}
         with:
           script: |
 
@@ -93,6 +102,10 @@ jobs:
 
             Please update your code generator to produce properly formatted code.
             ${filesToFormat} files need formatting.
+            
+            Note: The CI is setup so it fails early, if formatting issues are detected for any of the processes. 
+                  The report below is for process **${process.env.PROC_DIR}** with backend **${process.env.BACKEND}**.
+            
             See attached patch for details:`;
             
             github.rest.issues.createComment({

@@ -61,9 +61,7 @@ jobs:
           git commit -m "Code generated from PR #${{ github.event.pull_request.number }}" \
                      -m "Source PR: ${{ github.event.pull_request.html_url }}"
 
-          git fetch origin
-          git rebase origin/${BRANCH_NAME}
-          git push origin ${BRANCH_NAME}
+          git push -f origin ${BRANCH_NAME}
           
           echo "✅ Pushed to ${TARGET_REPO} on branch ${BRANCH_NAME}"
       

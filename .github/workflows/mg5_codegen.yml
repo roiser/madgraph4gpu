@@ -10,14 +10,10 @@ jobs:
 
     strategy:
       matrix:
-#        process: [pp_ttx, pp_ttxj]
-#        backend: [scalar, avx2, avx512, cuda, hip]
-        process: [pp_ttx]
-        backend: [scalar]
+        process: [pp_ttx, pp_ttxj]
 
     env:
       PROC_DIR: PROC_${{ matrix.process }}
-      BACKEND : ${{ matrix.backend }}
     
     steps:
       - name: Checkout codegen repo
@@ -101,7 +97,7 @@ jobs:
           python-version: "3.11"
 
       - name: Update README.md
-        if: ${{ steps.clang-format-check.outputs.files2format == '8' }}
+        if: ${{ steps.commit_to_target_repository.outcome == 'success' }}
         run: |
           echo "title: ${{ github.event.pull_request.title }}"
           echo "url: ${{ github.event.pull_request.html_url }}"

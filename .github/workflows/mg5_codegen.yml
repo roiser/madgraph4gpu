@@ -52,7 +52,7 @@ jobs:
           repositories: madgraph4gpu-generated-processes
 
       - name: Commit to target repository
-        if: ${{ steps.clang-format-check.outputs.files2format == '8' }}
+        if: ${{ steps.clang-format-check.outputs.files2format == '0' }}
         env:
           TARGET_REPO: roiser/madgraph4gpu-generated-processes
         run: |

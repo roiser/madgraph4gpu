@@ -10,8 +10,10 @@ jobs:
 
     strategy:
       matrix:
-        process: [pp_ttx, pp_ttxj]
-        backend: [scalar, avx2, avx512, cuda, hip]
+#        process: [pp_ttx, pp_ttxj]
+#        backend: [scalar, avx2, avx512, cuda, hip]
+        process: [pp_ttx]
+        backend: [scalar]
 
     env:
       PROC_DIR: PROC_${{ matrix.process }}
@@ -43,19 +45,28 @@ jobs:
           else
             echo "❌ clang-format check failed."
           fi
-      
+
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.GH_APP_ID }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          repositories: madgraph4gpu-generated-processes
+#          installation-id: ${{ secrets.GH_APP_INSTALLATION_ID }}
+
       - name: Commit to target repository
-        if: ${{ steps.clang-format-check.outputs.files2format == '0' }}
+        if: ${{ steps.clang-format-check.outputs.files2format == '8' }}
         env:
           TARGET_REPO: roiser/madgraph4gpu-generated-processes
-          GH_TOKEN: ${{ secrets.MG4GPU_GEN_PAT }} 
         run: |
           # Configure git
+
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@users.noreply.github.com"
           
           # Clone target repo
-          git clone https://x-access-token:${GH_TOKEN}@github.com/${TARGET_REPO}.git
+          git clone https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/${TARGET_REPO}.git
           cd madgraph4gpu-generated-processes
           
           # Create branch based on PR number

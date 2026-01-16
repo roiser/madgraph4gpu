@@ -41,10 +41,10 @@ jobs:
             echo "✅ clang-format check passed."
           else
             echo "❌ clang-format check failed."
-            exit 1
           fi
 
       - name: Generate GitHub App token
+        if: ${{ steps.clang-format-check.outputs.files2format == '0' }}
         id: app-token
         uses: actions/create-github-app-token@v1
         with:
@@ -84,6 +84,7 @@ jobs:
           echo "✅ Pushed to ${TARGET_REPO} on branch ${BRANCH_NAME}"
       
       - name: Set up Python
+        if: ${{ steps.commit_to_target_repository.outcome == 'success' }}
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -149,3 +150,7 @@ jobs:
               issue_number: context.issue.number,
               body: `${comment} \n \`\`\` \n ${patchContent} \n \`\`\``
             });
+
+      - name: Fail if format check failed
+        if: ${{ steps.clang-format-check.outputs.files2format != '0' }}
+        run: exit 1

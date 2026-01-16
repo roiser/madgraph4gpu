@@ -34,7 +34,7 @@ jobs:
       - name: Check code format with clang-format
         id: clang-format-check
         run: |
-          chmod +x .github/workflows/check-formatting.sh
+          chmod +x $GITHUB_WORKSPACE/.github/workflows/check-formatting.sh
           cd ${{ env.PROC_DIR }}
           $GITHUB_WORKSPACE/.github/workflows/check-formatting.sh
           files2format=$(cat files2format)
@@ -53,10 +53,9 @@ jobs:
           app-id: ${{ secrets.GH_APP_ID }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           repositories: madgraph4gpu-generated-processes
-#          installation-id: ${{ secrets.GH_APP_INSTALLATION_ID }}
 
       - name: Commit to target repository
-        if: ${{ steps.clang-format-check.outputs.files2format == '8' }}
+        if: ${{ steps.clang-format-check.outputs.files2format == '0' }}
         env:
           TARGET_REPO: roiser/madgraph4gpu-generated-processes
         run: |
@@ -94,12 +93,42 @@ jobs:
             echo "EOF"
           } >> $GITHUB_OUTPUT
 
+      - name: Update README.md
+        if: ${{ steps.clang-format-check.outputs.files2format == '8' }}
+        run: |
+          echo "title: ${{ github.event.pull_request.title }}"
+          echo "url: ${{ github.event.pull_request.html_url }}"
+          echo "number: ${{ github.event.pull_request.number }}"
+          echo "updated_at: ${{ github.event.pull_request.updated_at }}"
+          echo "user: ${{ github.event.pull_request.user.login }}"
+          echo "draft: ${{ github.event.pull_request.draft }}"
+          echo "created_at: ${{ github.event.pull_request.created_at }}"
+          echo "commits: ${{ github.event.pull_request.commits }}"
+
+          cd $GITHUB_WORKSPACE/madgraph4gpu-generated-processes
+          git checkout main
+
+          python3 $GITHUB_WORKSPACE/.github/workflows/update_readme.py \
+            --title "${{ github.event.pull_request.title }}" \
+            --url "${{ github.event.pull_request.html_url }}" \
+            --pr_num "${{ github.event.pull_request.number }}" \
+            --created "${{ github.event.pull_request.created_at }}" \
+            --last_updated "${{ github.event.pull_request.updated_at }}" \
+            --wip "${{ github.event.pull_request.draft }}" \
+            --num_commits "${{ github.event.pull_request.commits }}" \
+            --author "${{ github.event.pull_request.user.login }}"
+
+          git add .
+          git commit -m "Update README for PR #${{ github.event.pull_request.number }}"
+          git push -f origin main
+          
+          echo "✅ Pushed to ${TARGET_REPO} on branch main"
+
       - name: Comment on PR with format issues
         if: ${{ steps.clang-format-check.outputs.files2format != '0' }}
         uses: actions/github-script@v7
         env:
           FILES2FORMAT: ${{ steps.clang-format-check.outputs.files2format }}
-#          PROC_DIR: ${{ env.PROC_DIR }}
         with:
           script: |
 

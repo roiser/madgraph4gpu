@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import json
+import optparse
 
 class UpdateReadme:
     def __init__(self, title, url, pr_num, created, last_updated, wip, num_commits, author):
@@ -58,7 +59,6 @@ class UpdateReadme:
         self.write_readme()
         
 if __name__ == "__main__":
-import optparse
     parser = optparse.OptionParser()
     parser.add_option('--title', dest='title', help='PR title')
     parser.add_option('--url', dest='url', help='PR URL')

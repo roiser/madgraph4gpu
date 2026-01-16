@@ -56,7 +56,7 @@ jobs:
           repositories: madgraph4gpu-generated-processes
 
       - name: Commit to target repository
-        if: ${{ steps.clang-format-check.outputs.files2format == '0' }}
+        if: ${{ steps.clang-format-check.outputs.files2format == '8' }}
         env:
           TARGET_REPO: roiser/madgraph4gpu-generated-processes
         run: |
@@ -95,6 +95,11 @@ jobs:
             echo "EOF"
           } >> $GITHUB_OUTPUT
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
       - name: Update README.md
         if: ${{ steps.clang-format-check.outputs.files2format == '8' }}
         run: |
@@ -110,7 +115,9 @@ jobs:
           cd ${GITHUB_WORKSPACE}/madgraph4gpu-generated-processes
           git checkout main
 
-          python3 ${GITHUB_WORKSPACE}/.github/workflows/update_readme.py \
+          # python --version
+
+          python ${GITHUB_WORKSPACE}/.github/workflows/update_readme.py \
             --title "${{ github.event.pull_request.title }}" \
             --url "${{ github.event.pull_request.html_url }}" \
             --pr_num "${{ github.event.pull_request.number }}" \

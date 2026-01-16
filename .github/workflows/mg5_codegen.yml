@@ -41,6 +41,7 @@ jobs:
             echo "✅ clang-format check passed."
           else
             echo "❌ clang-format check failed."
+            exit 1
           fi
 
       - name: Generate GitHub App token
@@ -82,15 +83,6 @@ jobs:
           
           echo "✅ Pushed to ${TARGET_REPO} on branch ${BRANCH_NAME}"
       
-      - name: Read patch file
-        if: ${{ steps.clang-format-check.outputs.files2format != '0' }}
-        run: |
-          {
-            echo "patch_file_content<<EOF"
-            cat ${{ env.PROC_DIR }}/format-changes.patch
-            echo "EOF"
-          } >> $GITHUB_OUTPUT
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -99,19 +91,8 @@ jobs:
       - name: Update README.md
         if: ${{ steps.commit_to_target_repository.outcome == 'success' }}
         run: |
-          echo "title: ${{ github.event.pull_request.title }}"
-          echo "url: ${{ github.event.pull_request.html_url }}"
-          echo "number: ${{ github.event.pull_request.number }}"
-          echo "updated_at: ${{ github.event.pull_request.updated_at }}"
-          echo "user: ${{ github.event.pull_request.user.login }}"
-          echo "draft: ${{ github.event.pull_request.draft }}"
-          echo "created_at: ${{ github.event.pull_request.created_at }}"
-          echo "commits: ${{ github.event.pull_request.commits }}"
-
           cd ${GITHUB_WORKSPACE}/madgraph4gpu-generated-processes
           git checkout main
-
-          # python --version
 
           python ${GITHUB_WORKSPACE}/.github/workflows/update_readme.py \
             --title "${{ github.event.pull_request.title }}" \
@@ -128,6 +109,15 @@ jobs:
           git push -f origin main
           
           echo "✅ Pushed to ${TARGET_REPO} on branch main"
+
+      - name: Read patch file
+        if: ${{ steps.clang-format-check.outputs.files2format != '0' }}
+        run: |
+          {
+            echo "patch_file_content<<EOF"
+            cat ${{ env.PROC_DIR }}/format-changes.patch
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
 
       - name: Comment on PR with format issues
         if: ${{ steps.clang-format-check.outputs.files2format != '0' }}

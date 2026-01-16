@@ -13,6 +13,7 @@ class UpdateReadme:
         self.wip = wip
         self.num_commits = num_commits
         self.author = author
+        self.remote_repo_url = "https://github.com/roiser/madgraph4gpu-generated-processes/"
 
     def update_json(self):
         fh = open('readme_data.json', 'r')
@@ -22,6 +23,7 @@ class UpdateReadme:
         if self.pr_num not in data:
             new_entry = {
                 "title": self.title,
+                "branch": self.remote_repo_url + "tree/codegen-pr-" + str(self.pr_num),
                 "url": self.url,
                 "created": self.created,
                 "last_updated": self.last_updated,
@@ -49,10 +51,10 @@ class UpdateReadme:
 
         with open('README.md', 'w') as fh:
             fh.write("# Pull Request Summary\n\n")
-            fh.write("| PR Number | Title | Author | Created | Last Updated | WIP | Number of Commits |\n")
-            fh.write("|-----------|-------|--------|---------|--------------|-----|-------------------|\n")
+            fh.write("| PR Number | Local Branch | Title | WIP | # Commits | Author | Created | Last Update |\n")
+            fh.write("|-----------|--------------|-------|-----|-----------|--------|---------|-------------|\n")
             for pr_num, details in sorted_prs:
-                fh.write(f"| [{pr_num}]({details['url']}) | {details['title']} | {details['author']} | {details['created']} | {details['last_updated']} | {details['wip']} | {details['num_commits']} |\n")
+                fh.write(f"| [{pr_num}]({details['url']}) | [{details['branch'].split('/')[-1]}]({details['branch']}) | {details['title']} | {details['wip']} | {details['num_commits']} | {details['author']} | {details['created']} | {details['last_updated']} |\n")
 
     def run(self):
         self.update_json()

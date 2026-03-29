@@ -5,8 +5,12 @@
 *.mod
 *.pyc
 *.so
+py.py
 build.*
 .build.*
+
+#=== testing ===
+test/processes/PROC_*
 
 #=== Profiling ===
 nsight_logs
